@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
     numero_documento	VARCHAR(20) UNIQUE NOT NULL,
     nombre_completo		VARCHAR(128) NOT NULL,
     fecha_nacimiento	DATE NOT NULL,
-    sexo				CHAR(1) NOT NULL CHECK (sexo IN ('M', 'F','O')),
+    sexo				VARCHAR(1) NOT NULL CHECK (sexo IN ('M', 'F','O')),
     estado_civil		VARCHAR(32),
     ocupacion			VARCHAR(64),
     direccion			VARCHAR(128),

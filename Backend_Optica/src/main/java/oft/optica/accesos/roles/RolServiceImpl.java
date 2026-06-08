@@ -10,6 +10,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class RolServiceImpl implements RolService {
+
     private final RolRepository repository;
     private final RolMapper mapper;
     private final RolHelper helper;

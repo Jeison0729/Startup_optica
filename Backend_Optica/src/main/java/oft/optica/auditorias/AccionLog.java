@@ -48,4 +48,5 @@ public enum AccionLog {
     // Archivos adjuntos
     ARCHIVO_SUBIDO,
     ARCHIVO_ELIMINADO,
+    ARCHIVO_ACTUALIZADO
 }

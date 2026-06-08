@@ -17,8 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -26,119 +24,86 @@ public class WebSecurityConfig {
 
     private final UsuarioDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
-    private final CorsConfig corsConfig; // ← inyectamos el CorsConfig separado
+    private final CorsConfig corsConfig;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        return http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource())) // ← usa el bean externo
-                .authenticationProvider(authenticationProvider())
-                .authorizeHttpRequests(auth -> auth
+        return http.csrf(
+                        csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(
+                        corsConfig.corsConfigurationSource())).authenticationProvider(authenticationProvider()).authorizeHttpRequests(auth -> auth
 
-                        // RUTAS PÚBLICAS
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers("/auth/**").permitAll()
+                        // ── RUTAS PÚBLICAS ────────────────────────────────────
+                        .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/solicitudes/solicitar").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/solicitudes/restablecer").permitAll()
 
-                        // CATÁLOGOS
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/catalogos/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // USUARIOS
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/usuarios")
-                        .hasAuthority("ROLE_DEV")
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**")
-                        .hasAuthority("ROLE_DEV")
-                        .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**")
-                        .hasAuthority("ROLE_DEV")
-                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/*/reactivar")
-                        .hasAuthority("ROLE_DEV")
-                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        // ── CATÁLOGOS (solo GET, ambos roles) ────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/catalogos/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // PACIENTES
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/pacientes/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/pacientes")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/pacientes/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/pacientes/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/pacientes/**")
-                        .hasAuthority("ROLE_DEV")
+                        // ── SOLICITUDES DE RECUPERACIÓN ──────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/solicitudes").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/solicitudes/pendientes").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/solicitudes/*/aprobar").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/solicitudes/*/reenviar").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // CONSULTAS
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/consultas/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/consultas")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/consultas/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/consultas/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/consultas/**")
-                        .hasAuthority("ROLE_DEV")
+                        // ── USUARIOS ─────────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios").hasAuthority("ROLE_DEV")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAuthority("ROLE_DEV")
+                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/*/reactivar").hasAuthority("ROLE_DEV")
+                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/*/eliminar").hasAuthority("ROLE_DEV")
+                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // MEDICIONES
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/mediciones/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/mediciones")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/mediciones/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        // ── ROLES ─────────────────────────────────────────────
+                        .requestMatchers("/api/roles/**").hasAuthority("ROLE_DEV")
 
-                        // ACOMPAÑANTES
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers("/api/acompanantes/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        // ── USUARIOS-ROLES ────────────────────────────────────
+                        .requestMatchers("/api/usuarios-roles/**").hasAuthority("ROLE_DEV")
 
-                        // ARCHIVOS ADJUNTOS
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers("/api/archivos/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        // ── PACIENTES ─────────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/pacientes/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/pacientes").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/pacientes/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/pacientes/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // SOLICITUDES DE RECUPERACIÓN
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers("/api/solicitudes/**")
-                        .hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        // ── CONSULTAS ─────────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/consultas/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/consultas").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/consultas/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/consultas/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // ROLES Y USUARIOS-ROLES
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers("/api/roles/**", "/api/usuarios-roles/**")
-                        .hasAuthority("ROLE_DEV")
+                        // ── MEDICIONES ────────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/mediciones/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/mediciones").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/mediciones/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // AUDITORÍA
-                        // ─────────────────────────────────────────────────────────
-                        .requestMatchers("/api/auditoria/**")
-                        .hasAuthority("ROLE_DEV")
+                        // ── ACOMPAÑANTES ──────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/acompanantes/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/acompanantes").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/acompanantes/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/acompanantes/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                        // RESTO
-                        // ─────────────────────────────────────────────────────────
-                        .anyRequest().authenticated()
-                )
+                        // ── ARCHIVOS ADJUNTOS ─────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/adjuntos/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/adjuntos").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/adjuntos/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/adjuntos/**").hasAnyAuthority("ROLE_DEV", "ROLE_ADMIN")
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        // ── AUDITORÍA ─────────────────────────────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/logs/**").hasAuthority("ROLE_DEV")
 
-                .addFilterBefore(
-                        jwtAuthFilter,
-                        org.springframework.security.web.authentication
-                                .UsernamePasswordAuthenticationFilter.class
-                )
-                .build();
+                        // ── RESTO ─────────────────────────────────────────────
+                        .anyRequest().authenticated())
+
+                .sessionManagement(session
+                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication
+                        .UsernamePasswordAuthenticationFilter.class).build();
     }
 
     @Bean
