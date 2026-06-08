@@ -27,13 +27,25 @@ public enum AccionLog {
     // Pacientes
     PACIENTE_CREADO,
     PACIENTE_ACTUALIZADO,
-    PACIENTE_DESACTIVADO,
-    PACIENTE_ESTADO_CAMBIADO ,
-
+    PACIENTE_ESTADO_CAMBIADO,  // ← cubre desactivar, suspender, reactivar
+    //   PACIENTE_DESACTIVADO queda redundante, puedes quitarlo
 
     // Consultas
     CONSULTA_CREADA,
     CONSULTA_ACTUALIZADA,
     CONSULTA_FINALIZADA,
     CONSULTA_ANULADA,
+
+    // Acompañantes
+    ACOMPANANTE_CREADO,
+    ACOMPANANTE_ACTUALIZADO,
+    ACOMPANANTE_ELIMINADO,
+
+    // Mediciones optométricas
+    MEDICION_CREADA,
+    MEDICION_ACTUALIZADA,
+
+    // Archivos adjuntos
+    ARCHIVO_SUBIDO,
+    ARCHIVO_ELIMINADO,
 }
